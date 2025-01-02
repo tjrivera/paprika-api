@@ -1,75 +1,104 @@
-import * as rp from 'request-promise-native';
-import {Options} from "request-promise-native";
+import axios, { type AxiosRequestConfig } from "axios";
+
+interface PaprikaApiOptions {
+	email: string;
+	password: string;
+	token?: string;
+}
 
 export class PaprikaApi {
 	private email: string;
 	private password: string;
+	private baseUrl = "https://www.paprikaapp.com/api/v2";
+	private token: string | null;
+	private userAgent =
+		"Paprika Recipe Manager 3/3.8.0 (com.hindsightlabs.paprika.mac.v3; build:37; macOS 15.3.0) Alamofire/5.2.2";
 
-	private baseUrl: string = "https://www.paprikaapp.com/api/v1/sync/";
-
-	constructor(email: string, password: string) {
-		this.email = email;
-		this.password = password;
+	constructor(options: PaprikaApiOptions) {
+		this.email = options.email;
+		this.password = options.password;
+		this.token = options.token || null;
 	}
 
-	private resource(endpoint: string): Promise<any> {
-		let options: Options = {
-			auth: {
-				user: this.email,
-				pass: this.password
-			},
-			method: 'GET',
-			baseUrl: this.baseUrl,
-			uri: endpoint,
-			json: true,
+	public async login() {
+		try {
+			const params = new URLSearchParams();
+			params.append("email", this.email);
+			params.append("password", this.password);
+
+			const response = await axios.post(
+				`${this.baseUrl}/account/login/`,
+				params,
+				{
+					headers: {
+						"Content-Type": "application/x-www-form-urlencoded",
+						"User-Agent": this.userAgent,
+					},
+				},
+			);
+			this.token = response.data.result.token;
+		} catch (error) {
+			console.error("Error logging in:", error);
+		}
+	}
+
+	private async resource<T>(endpoint: string): Promise<T> {
+		if (!this.token) {
+			await this.login();
+		}
+		const config: AxiosRequestConfig = {
+			method: "GET",
+			baseURL: `${this.baseUrl}/sync/`,
+			url: endpoint,
 			headers: {
-				'User-Agent': 'PaprikaApi NodeJS library'
+				Authorization: `Bearer ${this.token}`,
+				"User-Agent":
+					"Paprika Recipe Manager 3/3.8.0 (com.hindsightlabs.paprika.mac.v3; build:37; macOS 15.3.0) Alamofire/5.2.2",
 			},
-			transform(body: any) {
-				return body.result;
-			}
 		};
-		return rp(options)
+
+		const response = await axios(config);
+		return response.data.result;
 	}
 
 	public bookmarks(): Promise<Bookmark[]> {
-		return this.resource('bookmarks');
+		return this.resource("bookmarks");
 	}
 
 	public categories(): Promise<Category[]> {
-		return this.resource('categories');
+		return this.resource("categories");
 	}
 
 	public groceries(): Promise<GroceryItem[]> {
-		return this.resource('groceries');
+		return this.resource("groceries");
 	}
 
 	public meals(): Promise<Meal[]> {
-		return this.resource('meals');
+		return this.resource("meals");
 	}
 
 	public menus(): Promise<Menu[]> {
-		return this.resource('menus');
+		return this.resource("menus");
 	}
 
 	public menuItems(): Promise<MenuItem[]> {
-		return this.resource('menuitems');
+		return this.resource("menuitems");
 	}
 
 	public pantry(): Promise<PantryItem[]> {
-		return this.resource('pantry');
+		return this.resource("pantry");
 	}
 
 	public recipes(): Promise<RecipeItem[]> {
-		return this.resource('recipes');
+		return this.resource("recipes");
 	}
 
 	public recipe(recipeUid: string): Promise<Recipe> {
-		return this.resource('recipe/' + recipeUid);
+		return this.resource(`recipe/${recipeUid}`);
 	}
 
 	public status(): Promise<Status> {
-		return this.resource('status');
+		return this.resource("status");
 	}
 }
 

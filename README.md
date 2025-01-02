@@ -1,11 +1,13 @@
 # paprika-api
 
+This is a fork of [joshstrange/paprika-api](https://github.com/joshstrange/paprika-api) with some changes to make it more compatible with Paprika API v2.
+
 You can use Typescript or just javascript to import the library.
 
 Typescript:
 
 ````typescript
-import {PaprikaApi} from 'paprika-api';
+import { PaprikaApi } from 'paprika-api';
 ````
 
 Javascript:
@@ -20,7 +22,7 @@ Use your email and password you use for [Paprika Sync](https://paprikaapp.com/ac
 
 
 ````typescript
-let paprikaApi = new PaprikaApi('email@example.com', 'myPassword');
+let paprikaApi = new PaprikaApi({email: 'email@example.com', password: 'myPassword'});
 ````
 
 ## Use
