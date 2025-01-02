@@ -1,27 +1,32 @@
 import axios, { type AxiosRequestConfig } from "axios";
 
 interface PaprikaApiOptions {
-	email: string;
-	password: string;
+	email?: string;
+	password?: string;
 	token?: string;
 }
 
 export class PaprikaApi {
-	private email: string;
-	private password: string;
+	private email: string | null;
+	private password: string | null;
 	private baseUrl = "https://www.paprikaapp.com/api/v2";
 	private token: string | null;
 	private userAgent =
 		"Paprika Recipe Manager 3/3.8.0 (com.hindsightlabs.paprika.mac.v3; build:37; macOS 15.3.0) Alamofire/5.2.2";
 
 	constructor(options: PaprikaApiOptions) {
-		this.email = options.email;
-		this.password = options.password;
+		this.email = options.email || null;
+		this.password = options.password || null;
 		this.token = options.token || null;
 	}
 
 	public async login() {
 		try {
+			if (!this.email || !this.password) {
+				throw new Error(
+					"Email and password are required if no token is provided",
+				);
+			}
 			const params = new URLSearchParams();
 			params.append("email", this.email);
 			params.append("password", this.password);
@@ -42,12 +47,15 @@ export class PaprikaApi {
 		}
 	}
 
-	private async resource<T>(endpoint: string): Promise<T> {
+	private async resource<T>(
+		endpoint: string,
+		method: "GET" | "POST" = "GET",
+	): Promise<T> {
 		if (!this.token) {
 			await this.login();
 		}
 		const config: AxiosRequestConfig = {
-			method: "GET",
+			method,
 			baseURL: `${this.baseUrl}/sync/`,
 			url: endpoint,
 			headers: {

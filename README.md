@@ -23,6 +23,8 @@ Use your email and password you use for [Paprika Sync](https://paprikaapp.com/ac
 
 ````typescript
 let paprikaApi = new PaprikaApi({email: 'email@example.com', password: 'myPassword'});
+// or if you have a token already
+let paprikaApi = new PaprikaApi({token: 'myToken'});
 ````
 
 ## Use
